@@ -30,15 +30,47 @@ export default function ReviewForm() {
 
   const title = useMemo(() => (movie ? `${movie.title} 리뷰 작성` : '리뷰 작성'), [movie])
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault()
     const valid = sex && age && rating > 0 && content.length >= 10 && password.length >= 4
     if (!valid) {
       alert('필수 정보 (성별, 연령, 별점, 리뷰 10자 이상, 비밀번호 4자리 이상)를 모두 입력해주세요.')
       return
     }
-    alert(`리뷰 제출 완료! (영화: ${movie?.title ?? ''}, 별점: ${rating}점)\n실제 서버 저장 로직이 필요합니다.`)
-    navigate(`/detail/${id}`)
+
+    const reviewData = {
+      sex,
+      age: parseInt(age, 10),
+      rating,
+      location,
+      companion: partners,
+      pcScene: cookie === 'Y',
+      quote,
+      review: content,
+      password,
+      movieID: parseInt(id, 10),
+    }
+
+    try {
+      const response = await fetch('https://6933b1984090fe3bf01dc49f.mockapi.io/reviews', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(reviewData),
+      })
+
+      if (response.ok) {
+        alert(`리뷰 제출 완료! (영화: ${movie?.title ?? ''}, 별점: ${rating}점)`)
+        navigate(`/detail/${id}`)
+      } else {
+        const errorData = await response.json()
+        alert(`리뷰 제출에 실패했습니다: ${errorData.message || '알 수 없는 오류'}`)
+      }
+    } catch (error) {
+      console.error('리뷰 제출 중 네트워크 오류 발생:', error)
+      alert('리뷰 제출 중 오류가 발생했습니다. 인터넷 연결을 확인해주세요.')
+    }
   }
 
   return (
