@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KOBIS 일일 박스오피스 순위</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome (for the reel icon) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        /* 커스텀 설정: 이미지의 깊은 검은색 배경과 둥근 모서리 재현 */
+        :root {
+            --bg-dark: #121212;
+            --panel-dark: #1e1e1e;
+            --input-dark: #2a2a2a;
+            --text-light: #e0e0e0;
+            --blue-accent: #3b82f6; /* 조회 버튼 색상 */
+            --border-color: #333333;
+            --red-accent: #ef4444; /* 삭제/경고 */
+            --star-color: #FFD700; /* 별점 색상 */
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* 패널 스타일 (이미지와 동일한 짙은 배경) */
+        .panel {
+            background-color: var(--panel-dark);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-color); /* 테두리 추가 */
+        }
+
+        /* 입력 필드 스타일 */
+        .input-style {
+            background-color: var(--input-dark);
+            border: 1px solid var(--border-color);
+            color: var(--text-light);
+            padding: 8px 12px;
+            border-radius: 4px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-style:focus {
+            border-color: var(--blue-accent);
+        }
+
+        /* 테이블 스타일 */
+        .ranking-table th {
+            padding: 15px 12px;
+            background-color: #252525;
+            border-bottom: 2px solid var(--border-color);
+            font-weight: 600;
+            white-space: nowrap; /* 컬럼명이 줄바꿈되지 않도록 */
+        }
+
+        .ranking-table td {
+            padding: 12px;
+            border-bottom: 1px solid #2f2f2f;
+        }
+
+        .ranking-table tbody tr:hover {
+            background-color: #252525;
+        }
+
+        /* 활성화된 필터 버튼 */
+        .filter-btn.active {
+            background-color: #4a4a4a;
+            border-color: #4a4a4a;
+            color: white;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- 헤더 -->
+    <header class="bg-black/20 p-4 border-b border-gray-700 flex justify-between items-center shadow-md">
+        <div class="text-xl font-bold text-white" id="headerTitle">KOBIS 일일 박스오피스</div>
+        <i class="fas fa-video text-2xl text-gray-500"></i>
+    </header>
+    
+    <main class="container mx-auto p-4 md:p-8">
+        
+        <!-- ======================================= 1. 순위 페이지 (Ranking View) ======================================= -->
+        <div id="rankingView">
+            <!-- 검색 조건 패널 -->
+            <section id="searchPanel" class="panel p-6 md:p-8 mb-8">
+                
+                <!-- 조회 날짜/개수 -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-x-6 gap-y-4 mb-6 pb-4 border-b border-gray-700">
+                    
+                    <!-- 조회 날짜 -->
+                    <div class="flex flex-col col-span-1 md:col-span-2">
+                        <label for="date-select" class="text-sm font-medium mb-1">조회 날짜</label>
+                        <input type="text" id="date-select" value="2024. 04. 24." class="input-style w-full" placeholder="YYYYMMDD">
+                        <span class="text-xs text-gray-500 mt-1">yyyymmdd 형식 전송</span>
+                    </div>
+                    
+                    <!-- 표시 개수 -->
+                    <div class="flex flex-col col-span-1 md:col-span-2">
+                        <label for="count-select" class="text-sm font-medium mb-1">표시 개수 (≤100)</label>
+                        <input type="number" id="count-select" value="20" min="1" max="100" class="input-style w-full" title="표시 개수">
+                    </div>
+
+                </div>
+
+                <!-- 필터 드롭다운 및 코드 -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-x-6 gap-y-4 mb-6">
+                    <!-- 배급사/상영사 -->
+                    <div class="flex flex-col">
+                        <label for="company-select" class="text-sm font-medium mb-1">배급사/상영사</label>
+                        <select id="company-select" class="input-style">
+                            <option value="all">전체</option>
+                            <option value="CJ">CJ</option>
+                        </select>
+                    </div>
+                    
+                    <!-- 국적 -->
+                    <div class="flex flex-col">
+                        <label for="nation-select" class="text-sm font-medium mb-1">국적</label>
+                        <select id="nation-select" class="input-style">
+                            <option value="all">전체</option>
+                            <option value="KR">국내</option>
+                        </select>
+                    </div>
+
+                    <!-- 영화 제목 조회 -->
+                    <div class="flex flex-col col-span-2">
+                        <label for="branch-code" class="text-sm font-medium mb-1">영화 제목</label>
+                        <input type="text" id="branch-code" class="input-style" placeholder="(선택)">
+                    </div>
+                </div>
+
+                <!-- 필터 버튼 및 조회 버튼 -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between pt-4 border-t border-gray-700">
+                    <!-- 필터 버튼 그룹 -->
+                    <div class="flex space-x-2 mb-4 sm:mb-0">
+                        <span class="font-medium mr-1 text-gray-400">정렬:</span>
+                        <button class="filter-btn active input-style text-sm font-medium bg-gray-600 border-gray-600 hover:bg-gray-700">오름차순</button>
+                        <button class="filter-btn input-style text-sm font-medium bg-gray-600 border-gray-600 hover:bg-gray-700">내림차순</button>
+                        
+                    </div>
+                    
+                    <!-- 조회/어제 날짜 버튼 -->
+                    <div class="flex space-x-3">
+                        <button id="yesterday-btn" class="py-2 px-4 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition duration-150 text-sm">
+                            어제 날짜
+                        </button>
+                        <button id="search-btn" class="py-2 px-6 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-150 text-sm">
+                            조회
+                        </button>
+                    </div>
+                </div>
+
+                <p class="text-xs text-gray-500 mt-4">원료: <strong id="resultCount">10건</strong></p>
+            </section>
+
+            <!-- 순위 결과 테이블 -->
+            <section class="panel p-6 md:p-8">
+                <h3 class="text-xl font-semibold mb-6 text-white border-b border-gray-700 pb-3">
+                    📊 박스오피스 순위
+                </h3>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-left ranking-table text-sm">
+                        <thead>
+                            <tr>
+                                <th scope="col" class="font-bold">순위</th>
+                                <th scope="col" class="font-bold">영화명</th>
+                                <th scope="col" class="font-bold">개봉일</th>
+                                <th scope="col" class="font-bold text-right">매출액</th>
+                                <th scope="col" class="font-bold text-right">관객수</th>
+                                <th scope="col" class="font-bold text-right">누적 관객수</th>
+                                <th scope="col" class="font-bold text-right">전일대비 증감비율</th>
+                                <th scope="col" class="font-bold text-right">상영 횟수</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rankingBody">
+                            <!-- Mock data rows -->
+                            <tr class="text-gray-300 ranking-row" data-movie-id="1001" data-movie-title="범죄도시 4">
+                                <td class="font-bold text-lg text-blue-400">1</td>
+                                <td class="font-semibold text-white cursor-pointer hover:underline" onclick="navigateTo('detail', '1001')">범죄도시 4</td>
+                                <td>2024.04.24</td>
+                                <td class="text-right text-green-400">1,500,000,000</td>
+                                <td class="text-right text-yellow-300">120,000</td>
+                                <td class="text-right">4,500,000</td>
+                                <td class="text-right text-green-400">▲ 15.3%</td>
+                                <td class="text-right">1,500</td>
+                            </tr>
+                            <tr class="text-gray-300 ranking-row" data-movie-id="1002" data-movie-title="파묘">
+                                <td class="font-bold text-lg text-blue-400">2</td>
+                                <td class="font-semibold text-white cursor-pointer hover:underline" onclick="navigateTo('detail', '1002')">파묘</td>
+                                <td>2024.02.22</td>
+                                <td class="text-right text-green-400">900,000,000</td>
+                                <td class="text-right text-yellow-300">85,000</td>
+                                <td class="text-right">10,500,000</td>
+                                <td class="text-right text-red-400">▼ 3.5%</td>
+                                <td class="text-right">1,200</td>
+                            </tr>
+                            <tr class="text-gray-300 ranking-row" data-movie-id="1003" data-movie-title="듄: 파트 2">
+                                <td class="font-bold text-lg text-blue-400">4</td>
+                                <td class="font-semibold text-white cursor-pointer hover:underline" onclick="navigateTo('detail', '1003')">듄: 파트 2</td>
+                                <td>2024.02.28</td>
+                                <td class="text-right text-green-400">650,000,000</td>
+                                <td class="text-right text-yellow-300">60,000</td>
+                                <td class="text-right">2,800,000</td>
+                                <td class="text-right text-green-400">▲ 1.0%</td>
+                                <td class="text-right">900</td>
+                            </tr>
+                            <tr class="text-gray-300 ranking-row" data-movie-id="1004" data-movie-title="쿵푸팬더 4">
+                                <td class="font-bold text-lg text-blue-400">11</td>
+                                <td class="font-semibold text-white cursor-pointer hover:underline" onclick="navigateTo('detail', '1004')">쿵푸팬더 4</td>
+                                <td>2024.04.10</td>
+                                <td class="text-right text-green-400">250,000,000</td>
+                                <td class="text-right text-yellow-300">25,000</td>
+                                <td class="text-right">1,500,000</td>
+                                <td class="text-right text-red-400">▼ 10.0%</td>
+                                <td class="text-right">500</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+        
+        <!-- ======================================= 2. 상세 페이지 (Detail View) ======================================= -->
+        <div id="detailView" class="hidden">
+            <section class="panel p-6 md:p-8">
+                <div class="flex justify-between items-center mb-6 border-b border-gray-700 pb-3">
+                    <button class="text-gray-400 hover:text-white transition duration-150" onclick="navigateTo('ranking')">
+                        <i class="fas fa-arrow-left mr-2"></i> 순위 목록으로
+                    </button>
+                    <h3 class="text-2xl font-bold text-white"><span id="detailMovieTitle">범죄도시 4</span> 상세 정보</h3>
+                    <button class="py-2 px-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-150 text-sm" onclick="navigateTo('review')">
+                        리뷰 작성 <i class="fas fa-pen ml-1"></i>
+                    </button>
+                </div>
+
+                <!-- 포스터 및 박스오피스 정보 -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <!-- 포스터 Placeholder -->
+                    <div class="md:col-span-1 bg-gray-700 h-96 rounded-lg flex items-center justify-center text-gray-400 text-xl font-bold">
+                        [Image of 포스터]
+                    </div>
+                    
+                    <!-- 영화 기본 정보 (랭킹 필드) -->
+                    <div class="md:col-span-2 space-y-3 p-4 bg-gray-700/30 rounded-lg">
+                        <div class="text-4xl font-extrabold text-white mb-4"><span id="detailRank" class="text-blue-400">1위</span> <span id="detailTitle">범죄도시 4</span></div>
+                        
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div class="font-medium text-gray-400">개봉일: <span id="detailRelease" class="text-white">2024.04.24</span></div>
+                            <div class="font-medium text-gray-400">상영 횟수: <span id="detailScreenCount" class="text-white">1,500회</span></div>
+                        </div>
+                        
+                        <div class="border-t border-gray-700 pt-3 grid grid-cols-2 gap-4 text-sm">
+                            <div class="font-medium text-gray-400">일일 매출액: <span id="detailDailySales" class="text-green-400 font-bold">1,500,000,000원</span></div>
+                            <div class="font-medium text-gray-400">일일 관객수: <span id="detailDailyAudience" class="text-yellow-300 font-bold">120,000명</span></div>
+                        </div>
+
+                        <div class="border-t border-gray-700 pt-3 grid grid-cols-2 gap-4 text-sm">
+                            <div class="font-medium text-gray-400">누적 관객수: <span id="detailTotalAudience" class="text-white font-bold">4,500,000명</span></div>
+                            <div class="font-medium text-gray-400">전일대비 증감비율: <span id="detailIncreaseRate" class="text-green-400 font-bold">▲ 15.3%</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 리뷰 목록 섹션 -->
+                <h4 class="text-lg font-semibold mb-4 text-gray-300 border-b border-gray-800 pb-2">리뷰 <span class="text-blue-400">(총 3개)</span></h4>
+                <div class="space-y-4">
+                    <!-- Mock Review 1 -->
+                    <div class="panel p-4 bg-gray-700/50">
+                        <div class="flex justify-between items-center mb-2">
+                            <div class="text-sm text-gray-400">
+                                <span class="mr-3">여성 | 30대</span>
+                                <span class="text-yellow-400">★★★★☆</span>
+                                <span class="ml-3 text-xs">[장소: 코엑스 / 명대사: 나, 마동석인데...]</span>
+                            </div>
+                            <button class="text-red-400 text-xs hover:text-red-300">삭제</button>
+                        </div>
+                        <p class="text-gray-200">액션이 시원시원해서 좋았습니다. 마동석 배우의 펀치가 화면을 뚫고 나오는 듯했어요!</p>
+                    </div>
+                    <!-- Mock Review 2 -->
+                    <div class="panel p-4 bg-gray-700/50">
+                        <div class="flex justify-between items-center mb-2">
+                            <div class="text-sm text-gray-400">
+                                <span class="mr-3">남성 | 20대</span>
+                                <span class="text-yellow-400">★★★★★</span>
+                                <span class="ml-3 text-xs">[장소: CGV 용산 / 쿠키: 있음 / 같이 본 사람: 가족]</span>
+                            </div>
+                            <button class="text-red-400 text-xs hover:text-red-300">삭제</button>
+                        </div>
+                        <p class="text-gray-200">역대급 빌런은 아니었지만, 시리즈가 가진 재미는 확실히 보장합니다. 극장에서 봐야 제맛!</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ======================================= 3. 리뷰 작성 페이지 (Review Form) ======================================= -->
+        <div id="reviewForm" class="hidden">
+            <section class="panel p-6 md:p-8 max-w-2xl mx-auto">
+                <div class="flex justify-between items-center mb-6 border-b border-gray-700 pb-3">
+                    <button class="text-gray-400 hover:text-white transition duration-150" onclick="navigateTo('detail', currentMovieId)">
+                        <i class="fas fa-arrow-left mr-2"></i> 상세 페이지로
+                    </button>
+                    <h3 class="text-2xl font-bold text-blue-400"><span id="reviewMovieTitle">범죄도시 4</span> 리뷰 작성</h3>
+                    <div></div>
+                </div>
+
+                <form id="movieReviewForm" class="space-y-6">
+                    
+                    <!-- 기본 정보: MovieID, 성별, 연령 -->
+                    <div class="grid grid-cols-3 gap-4">
+                         <div class="flex flex-col">
+                            <label class="text-sm font-medium mb-1">Movie ID</label>
+                            <input type="text" id="reviewMovieId" value="1001" class="input-style bg-gray-600" readonly>
+                        </div>
+                        <div class="flex flex-col">
+                            <label for="reviewSex" class="text-sm font-medium mb-1">성별</label>
+                            <select id="reviewSex" class="input-style">
+                                <option value="">선택</option>
+                                <option value="M">남성</option>
+                                <option value="F">여성</option>
+                            </select>
+                        </div>
+                        
+                        <div class="flex flex-col">
+                            <label for="reviewAge" class="text-sm font-medium mb-1">연령</label>
+                            <select id="reviewAge" class="input-style">
+                                <option value="">선택</option>
+                                <option value="10">10대</option>
+                                <option value="20">20대</option>
+                                <option value="30">30대</option>
+                                <option value="40">40대</option>
+                                <option value="50+">50대 이상</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 별점 -->
+                    <div class="flex flex-col">
+                        <label class="text-sm font-medium mb-2">별점</label>
+                        <div id="starRating" class="flex space-x-1 text-3xl cursor-pointer">
+                            <i class="fas fa-star text-gray-600 hover:text-yellow-400 transition" data-rating="1"></i>
+                            <i class="fas fa-star text-gray-600 hover:text-yellow-400 transition" data-rating="2"></i>
+                            <i class="fas fa-star text-gray-600 hover:text-yellow-400 transition" data-rating="3"></i>
+                            <i class="fas fa-star text-gray-600 hover:text-yellow-400 transition" data-rating="4"></i>
+                            <i class="fas fa-star text-gray-600 hover:text-yellow-400 transition" data-rating="5"></i>
+                        </div>
+                        <input type="hidden" id="ratingValue" value="0">
+                    </div>
+
+                    <!-- 경험 필드: 본 장소, 같이 본 사람, 쿠키영상 여부 -->
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="flex flex-col">
+                            <label for="reviewLocation" class="text-sm font-medium mb-1">본 장소</label>
+                            <input type="text" id="reviewLocation" class="input-style" placeholder="예: CGV 강남">
+                        </div>
+                        <div class="flex flex-col">
+                            <label for="reviewPartners" class="text-sm font-medium mb-1">같이 본 사람</label>
+                            <input type="text" id="reviewPartners" class="input-style" placeholder="예: 친구, 혼자, 연인">
+                        </div>
+                        <div class="flex flex-col">
+                            <label for="reviewCookie" class="text-sm font-medium mb-1">쿠키영상 여부</label>
+                            <select id="reviewCookie" class="input-style">
+                                <option value="">선택</option>
+                                <option value="Y">있음</option>
+                                <option value="N">없음</option>
+                                <option value="Maybe">모름</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 생각나는 명대사 -->
+                    <div class="flex flex-col">
+                        <label for="reviewQuote" class="text-sm font-medium mb-1">생각나는 명대사</label>
+                        <input type="text" id="reviewQuote" class="input-style" placeholder="가장 인상 깊었던 대사를 남겨주세요">
+                    </div>
+
+
+                    <!-- 리뷰 내용 -->
+                    <div class="flex flex-col">
+                        <label for="reviewContent" class="text-sm font-medium mb-1">리뷰</label>
+                        <textarea id="reviewContent" rows="5" class="input-style" placeholder="솔직한 리뷰를 남겨주세요 (최소 10자)"></textarea>
+                    </div>
+                    
+                    <!-- 비밀번호 -->
+                    <div class="flex flex-col">
+                        <label for="reviewPassword" class="text-sm font-medium mb-1">비밀번호 (수정/삭제용)</label>
+                        <input type="password" id="reviewPassword" class="input-style" placeholder="4자리 이상 입력">
+                        <span class="text-xs text-gray-500 mt-1">리뷰 수정/삭제 시 필요합니다.</span>
+                    </div>
+
+                    <!-- 제출 버튼 -->
+                    <div class="flex justify-end pt-4">
+                        <button type="submit" class="py-2 px-6 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-150">
+                            리뷰 제출하기
+                        </button>
+                    </div>
+                </form>
+            </section>
+        </div>
+
+    </main>
+
+    <script>
+        let currentPage = 'ranking';
+        let currentMovieId = '1001';
+        let currentMovieTitle = '범죄도시 4';
+        let selectedRating = 0;
+
+        const mockMovies = {
+            '1001': { 
+                title: '범죄도시 4', rank: 1, release: '2024.04.24', 
+                dailySales: 1500000000, dailyAudience: 120000, totalAudience: 4500000, increaseRate: 15.3, screenCount: 1500,
+                location: '메가박스 코엑스', quote: '나, 마동석인데...', cookie: '있음 (1개)', partners: '친구 2명' 
+            },
+            '1002': { 
+                title: '파묘', rank: 2, release: '2024.02.22', 
+                dailySales: 900000000, dailyAudience: 85000, totalAudience: 10500000, increaseRate: -3.5, screenCount: 1200,
+                location: 'CGV 용산', quote: '여우가 범의 허리를 끊었다.', cookie: '없음', partners: '가족' 
+            },
+            '1003': { 
+                title: '듄: 파트 2', rank: 4, release: '2024.02.28', 
+                dailySales: 650000000, dailyAudience: 60000, totalAudience: 2800000, increaseRate: 1.0, screenCount: 900,
+                location: 'IMAX 왕십리', quote: 'Long live the fighters!', cookie: '없음', partners: '연인' 
+            },
+            '1004': { 
+                title: '쿵푸팬더 4', rank: 11, release: '2024.04.10', 
+                dailySales: 250000000, dailyAudience: 25000, totalAudience: 1500000, increaseRate: -10.0, screenCount: 500,
+                location: '롯데시네마', quote: 'The Wuxi Finger Hold!', cookie: '있음 (1개)', partners: '혼자' 
+            },
+        };
+
+        // 숫자 포맷 함수
+        const formatNumber = (num) => {
+            return num.toLocaleString('ko-KR');
+        };
+
+        const renderPage = () => {
+            // 모든 뷰 숨기기
+            document.getElementById('rankingView').classList.add('hidden');
+            document.getElementById('detailView').classList.add('hidden');
+            document.getElementById('reviewForm').classList.add('hidden');
+            
+            // 헤더 타이틀 업데이트
+            const headerTitle = document.getElementById('headerTitle');
+            
+            if (currentPage === 'ranking') {
+                document.getElementById('rankingView').classList.remove('hidden');
+                headerTitle.textContent = 'KOBIS 일일 박스오피스';
+            } else if (currentPage === 'detail') {
+                document.getElementById('detailView').classList.remove('hidden');
+                loadMovieDetails(currentMovieId);
+                headerTitle.textContent = currentMovieTitle + ' 상세 정보';
+            } else if (currentPage === 'review') {
+                document.getElementById('reviewForm').classList.remove('hidden');
+                document.getElementById('reviewMovieTitle').textContent = currentMovieTitle;
+                document.getElementById('reviewMovieId').value = currentMovieId;
+                headerTitle.textContent = currentMovieTitle + ' 리뷰 작성';
+            }
+        };
+
+        const navigateTo = (page, movieId = null) => {
+            if (movieId) {
+                currentMovieId = movieId;
+                currentMovieTitle = mockMovies[movieId] ? mockMovies[movieId].title : '선택된 영화';
+            }
+            currentPage = page;
+            renderPage();
+            window.scrollTo(0, 0); // 페이지 상단으로 스크롤
+        };
+
+        const loadMovieDetails = (movieId) => {
+            const movie = mockMovies[movieId];
+            if (!movie) return;
+
+            // 상세 페이지 정보 채우기
+            document.getElementById('detailMovieTitle').textContent = movie.title;
+            
+            document.getElementById('detailRank').textContent = `${movie.rank}위`;
+            document.getElementById('detailTitle').textContent = movie.title;
+            document.getElementById('detailRelease').textContent = movie.release;
+            document.getElementById('detailScreenCount').textContent = formatNumber(movie.screenCount) + '회';
+            document.getElementById('detailDailySales').textContent = formatNumber(movie.dailySales) + '원';
+            document.getElementById('detailDailyAudience').textContent = formatNumber(movie.dailyAudience) + '명';
+            document.getElementById('detailTotalAudience').textContent = formatNumber(movie.totalAudience) + '명';
+            
+            const increaseRateElement = document.getElementById('detailIncreaseRate');
+            increaseRateElement.textContent = (movie.increaseRate >= 0 ? '▲ ' : '▼ ') + Math.abs(movie.increaseRate) + '%';
+            increaseRateElement.className = 'font-bold ' + (movie.increaseRate >= 0 ? 'text-green-400' : 'text-red-400');
+
+            // 리뷰 작성 버튼의 대상 영화 ID 설정
+            document.querySelector('#detailView button.bg-blue-600').onclick = () => navigateTo('review', movieId);
+        };
+
+        const handleStarRating = (rating) => {
+            selectedRating = rating;
+            document.getElementById('ratingValue').value = rating;
+            const stars = document.querySelectorAll('#starRating i');
+            stars.forEach(star => {
+                const starRating = parseInt(star.getAttribute('data-rating'));
+                if (starRating <= rating) {
+                    star.classList.remove('text-gray-600');
+                    star.classList.add('text-yellow-400');
+                } else {
+                    star.classList.remove('text-yellow-400');
+                    star.classList.add('text-gray-600');
+                }
+            });
+        };
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. 초기 페이지 렌더링
+            renderPage();
+
+            // 2. 검색 조건 이벤트 리스너 (기존 로직 유지)
+            document.getElementById('search-btn').addEventListener('click', () => {
+                const date = document.getElementById('date-select').value;
+                const count = document.getElementById('count-select').value;
+                console.log(`[Search] 날짜: ${date}, 개수: ${count}`);
+            });
+            
+            document.getElementById('yesterday-btn').addEventListener('click', () => {
+                 document.getElementById('date-select').value = '2024. 04. 23.';
+            });
+
+            document.querySelectorAll('.filter-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    document.querySelectorAll('.filter-btn').forEach(btn => {
+                        btn.classList.remove('active', 'bg-gray-700', 'border-gray-700');
+                        btn.classList.add('bg-gray-600', 'border-gray-600');
+                    });
+                    e.target.classList.add('active', 'bg-gray-700', 'border-gray-700');
+                });
+            });
+            
+            // 3. 리뷰 폼 이벤트 리스너
+            document.getElementById('starRating').addEventListener('click', (e) => {
+                if (e.target.tagName === 'I' && e.target.hasAttribute('data-rating')) {
+                    handleStarRating(parseInt(e.target.getAttribute('data-rating')));
+                }
+            });
+
+            document.getElementById('movieReviewForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const data = {
+                    movieId: document.getElementById('reviewMovieId').value,
+                    sex: document.getElementById('reviewSex').value,
+                    age: document.getElementById('reviewAge').value,
+                    rating: selectedRating,
+                    content: document.getElementById('reviewContent').value,
+                    password: document.getElementById('reviewPassword').value,
+                    location: document.getElementById('reviewLocation').value,
+                    partners: document.getElementById('reviewPartners').value,
+                    cookie: document.getElementById('reviewCookie').value,
+                    quote: document.getElementById('reviewQuote').value,
+                };
+                
+                if (!data.sex || !data.age || data.rating === 0 || data.content.length < 10 || data.password.length < 4) {
+                    // alert 대신 콘솔 출력 또는 커스텀 메시지 박스를 사용해야 하지만, 여기서는 alert 사용
+                    alert('필수 정보 (성별, 연령, 별점, 리뷰 10자 이상, 비밀번호 4자리 이상)를 모두 입력해주세요.');
+                    return;
+                }
+                
+                alert(`리뷰 제출 완료! (영화: ${currentMovieTitle}, 별점: ${data.rating}점)\n실제 서버 저장 로직이 필요합니다.`);
+                navigateTo('detail', data.movieId); // 제출 후 상세 페이지로 복귀
+            });
+            
+            // 초기 별점 설정 (0점)
+            handleStarRating(0);
+        });
+    </script>
+</body>
+</html>
