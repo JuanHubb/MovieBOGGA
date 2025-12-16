@@ -35,6 +35,8 @@ export default function DetailView() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tmdbPosterPath, setTmdbPosterPath] = useState(null);
+  const [movieDetail, setMovieDetail] = useState(null);
+  const [trailerKey, setTrailerKey] = useState(null);
   const [tmdbLoading, setTmdbLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -72,7 +74,7 @@ export default function DetailView() {
       );
       setShowModal(false);
       setSelectedReview(null);
-      alert("Your review is deleted!"); // Add this line
+      alert("Your review is deleted!");
     } catch (e) {
       alert(e.message);
       setError(e.message);
@@ -99,26 +101,54 @@ export default function DetailView() {
       }
     };
 
-    const fetchTmdbData = async () => {
-      if ( !movie || tmdbPosterPath ) return 0;
+const fetchTmdbData = async () => {
+      if ( !movie || (tmdbPosterPath && trailerKey) ) return;
 
       setTmdbLoading(true);
       try{
-        const response = await fetch(
+        const searchResponse = await fetch(
           `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(movie.title)}&language=ko-KR`
         );
+
+        if (!searchResponse.ok){
+          throw new Error("Failed to load TMDb search data.");
+        }
         
-        if (!response.ok){
-          throw new Error("Failed to load TMDb data.");
-        }
+        const searchData = await searchResponse.json();
+        
+        if (searchData.results && searchData.results.length > 0){
+          const tmdbMovie = searchData.results[0];
+          const movieId = tmdbMovie.id;
 
-        const data = await response.json();
+          setTmdbPosterPath(tmdbMovie.poster_path);
+          setMovieDetail(tmdbMovie.overview);
 
-        if (data.results && data.results.length > 0){
-          setTmdbPosterPath(data.results[0].poster_path);
-        }else{
+          const videosResponse = await fetch(
+             `https://api.themoviedb.org/3/movie/${movieId}/videos?api_key=${TMDB_API_KEY}`
+          );
+          
+          if (!videosResponse.ok){
+             console.warn("No videos found or failed to load videos.");
+             setTrailerKey(null);
+          } else {
+             const videosData = await videosResponse.json();
+             
+             const trailer = videosData.results.find(
+                v => v.site === "YouTube" && (v.type === "Trailer" || v.type === "Teaser")
+             );
+ 
+             if (trailer) {
+                setTrailerKey(trailer.key);
+             } else {
+                setTrailerKey(null);
+             }
+          }
+        } else {
           setTmdbPosterPath(null);
+          setMovieDetail(null);
+          setTrailerKey(null);
         }
+
       }catch (e){
         console.error("TMDb Fetch Error:", e);
       }finally{
@@ -130,7 +160,7 @@ export default function DetailView() {
       fetchReviews();
       fetchTmdbData();
     }
-  }, [id, movie]);
+  }, [id, movie, tmdbPosterPath, movieDetail, trailerKey]);
 
   if (!movie) {
     return (
@@ -145,6 +175,12 @@ export default function DetailView() {
 
   const posterUrl = tmdbPosterPath 
     ? `${TMDB_IMAGE_BASE_URL}${tmdbPosterPath}` 
+    : null;
+
+  const movieDetailText = movieDetail ? (movieDetail) : ("No additional details available.");
+
+  const trailerUrl = trailerKey
+    ? `https://www.youtube.com/embed/${trailerKey}?autoplay=1&mute=1&rel=0`
     : null;
 
   return (
@@ -197,7 +233,7 @@ export default function DetailView() {
                 }
               </div>
             </div>
-            <div className="md:col-span-2 space-y-3 p-4 bg-gray-700/30 rounded-lg">
+            <div className="md:col-span-2 space-y-3 p-4 bg-gray-700/30 rounded-lg h-96 flex flex-col overflow-hidden">
               <div className="text-4xl font-extrabold text-white mb-4">
                 <span className="text-blue-400">{movie.rank}th</span>{" "}
                 {movie.title}
@@ -246,31 +282,59 @@ export default function DetailView() {
                   </span>
                 </div>
               </div>
+              <div className="border-t border-gray-700 pt-3 flex-1 flex flex-col min-h-0">
+                <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700 flex-1 overflow-y-auto">
+                  <p className="text-gray-300 text-sm leading-relaxed">
+                    {movieDetailText}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-1 p-4 bg-gray-700/30 rounded-lg space-y-2">
-              <div className="font-semibold text-white">
-                Viewing Information
-              </div>
-              <div className="text-sm text-gray-300">
-                Location: {movie.location}
-              </div>
-              <div className="text-sm text-gray-300">
-                With: {movie.partners}
-              </div>
-              <div className="text-sm text-gray-300">
-                Cookie Video: {movie.cookie}
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="md:col-span-1 p-4 bg-gray-700/30 rounded-lg">
+              <div className="text-sm font-medium text-gray-400 mb-2">Movie Trailer</div>
+              {trailerUrl ? (
+                <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                  <iframe
+                    title="Movie Trailer"
+                    src={trailerUrl}
+                    className="absolute top-0 left-0 w-full h-full rounded-lg"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  ></iframe>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-64 text-gray-400">
+                  <p>No trailer available</p>
+                </div>
+              )}
             </div>
-            <div className="md:col-span-2 p-4 bg-gray-700/30 rounded-lg">
-              <div className="font-semibold text-white mb-2">
-                Memorable Quote
+            <div className="md:col-span-2 space-y-3 p-4 bg-gray-700/30 rounded-lg">
+              <div className="grid grid-cols-2 gap-4 text-sm h-full">
+                <div className="flex flex-col">
+                  <div className="text-base font-bold text-white mb-3 pb-2 border-b border-gray-600">
+                    Viewing Information
+                  </div>
+                  <div className="text-gray-300 space-y-2">
+                    <div>Location: {movie.location}</div>
+                    <div>With: {movie.partners}</div>
+                    <div>Cookie Video: {movie.cookie}</div>
+                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <div className="text-base font-bold text-white mb-3 pb-2 border-b border-gray-600">
+                    Memorable Quote
+                  </div>
+                  <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 shadow-xl border border-white/20 flex-1 flex items-center hover:bg-white/15 transition-all duration-300">
+                    <blockquote className="italic text-gray-200 m-0 text-base leading-relaxed">
+                      "{movie.quote}"
+                    </blockquote>
+                  </div>
+                </div>
               </div>
-              <blockquote className="italic text-gray-300">
-                “{movie.quote}”
-              </blockquote>
             </div>
           </div>
         </section>
