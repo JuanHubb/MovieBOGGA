@@ -9,6 +9,10 @@ import {
 } from "../utils/format.js";
 import styled from "styled-components";
 
+const TMDB_API_KEY = 'd0ae6c80f1ae0a6dc5f19f0a08d88f44'
+const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500'
+
+
 function StarDisplay({ rating }) {
   return (
     <div className="flex space-x-1">
@@ -30,6 +34,8 @@ export default function DetailView() {
   const movie = mockMovies[id];
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [tmdbPosterPath, setTmdbPosterPath] = useState(null);
+  const [tmdbLoading, setTmdbLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -52,10 +58,38 @@ export default function DetailView() {
       }
     };
 
+    const fetchTmdbData = async () => {
+      if ( !movie || tmdbPosterPath ) return 0;
+
+      setTmdbLoading(true);
+      try{
+        const response = await fetch(
+          `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(movie.title)}&language=ko-KR`
+        );
+        
+        if (!response.ok){
+          throw new Error("Failed to load TMDb data.");
+        }
+
+        const data = await response.json();
+
+        if (data.results && data.results.length > 0){
+          setTmdbPosterPath(data.results[0].poster_path);
+        }else{
+          setTmdbPosterPath(null);
+        }
+      }catch (e){
+        console.error("TMDb Fetch Error:", e);
+      }finally{
+        setTmdbLoading(false);
+      }
+    }
+
     if (id) {
       fetchReviews();
+      fetchTmdbData();
     }
-  }, [id]);
+  }, [id, movie]);
 
   if (!movie) {
     return (
@@ -67,6 +101,10 @@ export default function DetailView() {
       </>
     );
   }
+
+  const posterUrl = tmdbPosterPath 
+    ? `${TMDB_IMAGE_BASE_URL}${tmdbPosterPath}` 
+    : null;
 
   return (
     <>
@@ -92,8 +130,31 @@ export default function DetailView() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="md:col-span-1 bg-gray-700 h-96 rounded-lg flex items-center justify-center text-gray-400 text-xl font-bold">
-              [Image of 포스터]
+            <div 
+              className="md:col-span-1 bg-gray-700 h-96 rounded-lg flex items-center justify-center text-gray-400 text-xl font-bold relative overflow-hidden"
+              style={posterUrl ? {
+                backgroundImage: `url(${posterUrl})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              } : {}}
+            >
+              {posterUrl && (
+                <div className="absolute inset-0 backdrop-blur-md bg-gray-700/60"></div>
+              )}
+              <div className="relative z-10 w-full h-full flex items-center justify-center">
+                {tmdbLoading ? (
+                  <p>Loading poster...</p>
+                  ) : posterUrl ? (
+                    <img
+                      src={posterUrl}
+                      alt={`${movie.title} Poster`}
+                      className = "max-w-full max-h-full object-contain" 
+                      />
+                  ) : (
+                    <p>[Image of 포스터]</p>
+                  )
+                }
+              </div>
             </div>
             <div className="md:col-span-2 space-y-3 p-4 bg-gray-700/30 rounded-lg">
               <div className="text-4xl font-extrabold text-white mb-4">
