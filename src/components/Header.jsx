@@ -1,4 +1,4 @@
-import React from 'react'
+import React from "react";
 
 export default function Header({ title }) {
   return (
@@ -6,6 +6,5 @@ export default function Header({ title }) {
       <div className="text-xl font-bold text-white">{title}</div>
       <i className="fas fa-video text-2xl text-gray-500" />
     </header>
-  )
+  );
 }
-

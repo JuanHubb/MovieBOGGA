@@ -37,13 +37,54 @@ export default function DetailView() {
   const [tmdbPosterPath, setTmdbPosterPath] = useState(null);
   const [tmdbLoading, setTmdbLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedReview, setSelectedReview] = useState(null);
+  const [password, setPassword] = useState("");
+
+  const handleDeleteClick = (review) => {
+    setSelectedReview(review);
+    setShowModal(true);
+    setPassword("");
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedReview) return;
+
+    if (password !== selectedReview.password) {
+      alert("Wrong password!");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `https://6933b1984090fe3bf01dc49f.mockapi.io/reviews/${selectedReview.id}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to delete review.");
+      }
+
+      setReviews((prevReviews) =>
+        prevReviews.filter((review) => review.id !== selectedReview.id),
+      );
+      setShowModal(false);
+      setSelectedReview(null);
+      alert("Your review is deleted!"); // Add this line
+    } catch (e) {
+      alert(e.message);
+      setError(e.message);
+    }
+  };
 
   useEffect(() => {
     const fetchReviews = async () => {
       try {
         setLoading(true);
         const response = await fetch(
-          `https://6933b1984090fe3bf01dc49f.mockapi.io/reviews?movieID=${id}`
+          `https://6933b1984090fe3bf01dc49f.mockapi.io/reviews?movieID=${id}`,
         );
         if (!response.ok) {
           throw new Error("Failed to load reviews.");
@@ -271,6 +312,11 @@ export default function DetailView() {
                         </blockquote>
                       )}
                       <p className="text-gray-200">{review.review}</p>
+                      <div className="flex justify-end mt-4">
+                        <DeleteButton onClick={() => handleDeleteClick(review)}>
+                          Delete
+                        </DeleteButton>
+                      </div>
                     </div>
                   </ReviewItem>
                 ))}
@@ -280,6 +326,39 @@ export default function DetailView() {
             ))}
         </ReviewSection>
       </main>
+      {showModal && (
+        <ModalBackdrop onClick={() => setShowModal(false)}>
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold mb-4 text-white">
+              Enter the password
+            </h3>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Password"
+            />
+            <div className="flex justify-end space-x-2 mt-4">
+              <button
+                onClick={() => {
+                  setShowModal(false);
+                  setPassword("");
+                }}
+                className="py-2 px-4 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition duration-150"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="py-2 px-4 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition duration-150"
+              >
+                Delete
+              </button>
+            </div>
+          </ModalContent>
+        </ModalBackdrop>
+      )}
     </>
   );
 }
@@ -324,4 +403,43 @@ const ReviewerInfo = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.5rem;
+`;
+
+const DeleteButton = styled.button`
+  background-color: transparent;
+  color: #ef4444;
+  border: 1px solid #ef4444;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  transition: all 0.2s ease-in-out;
+  line-height: 1.25;
+
+  &:hover {
+    background-color: #ef4444;
+    color: white;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+  }
+`;
+
+const ModalBackdrop = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
+
+const ModalContent = styled.div`
+  background-color: #1f2937;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
 `;
