@@ -66,7 +66,7 @@ export default function DetailView() {
       );
 
       if (!response.ok) {
-        throw new Error("Failed to delete review.");
+        throw new Error("Review does not exist");
       }
 
       setReviews((prevReviews) =>
@@ -89,7 +89,7 @@ export default function DetailView() {
           `https://6933b1984090fe3bf01dc49f.mockapi.io/reviews?movieID=${id}`,
         );
         if (!response.ok) {
-          throw new Error("Failed to load reviews.");
+          throw new Error("Review does not exist");
         }
         const data = await response.json();
         setReviews(data);
@@ -124,7 +124,7 @@ const fetchTmdbData = async () => {
           setMovieDetail(tmdbMovie.overview);
 
           const videosResponse = await fetch(
-             `https://api.themoviedb.org/3/movie/${movieId}/videos?api_key=${TMDB_API_KEY}`
+             `https://api.themoviedb.org/3/movie/${movieId}/videos?api_key=${TMDB_API_KEY}&language=ko-KR`
           );
           
           if (!videosResponse.ok){
