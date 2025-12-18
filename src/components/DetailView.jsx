@@ -31,7 +31,24 @@ function StarDisplay({ rating }) {
 export default function DetailView() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const movie = mockMovies[id];
+  
+  // 먼저 localStorage에서 영화 목록 확인 (API에서 가져온 데이터)
+  // 없으면 mockMovies에서 확인
+  const [movie, setMovie] = useState(() => {
+    try {
+      const storedMovies = localStorage.getItem('movies');
+      if (storedMovies) {
+        const movies = JSON.parse(storedMovies);
+        const foundMovie = movies.find(m => m.id === id);
+        if (foundMovie) return foundMovie;
+      }
+    } catch (e) {
+      console.error('localStorage 읽기 실패:', e);
+    }
+    // localStorage에 없으면 mockMovies에서 찾기
+    return mockMovies[id] || null;
+  });
+  
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tmdbPosterPath, setTmdbPosterPath] = useState(null);
@@ -319,9 +336,9 @@ const fetchTmdbData = async () => {
                     Viewing Information
                   </div>
                   <div className="text-gray-300 space-y-2">
-                    <div>Location: {movie.location}</div>
-                    <div>With: {movie.partners}</div>
-                    <div>Cookie Video: {movie.cookie}</div>
+                    <div>Location: {movie.location || '정보 없음'}</div>
+                    <div>With: {movie.partners || '정보 없음'}</div>
+                    <div>Cookie Video: {movie.cookie || '정보 없음'}</div>
                   </div>
                 </div>
                 <div className="flex flex-col">
@@ -330,7 +347,7 @@ const fetchTmdbData = async () => {
                   </div>
                   <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 shadow-xl border border-white/20 flex-1 flex items-center hover:bg-white/15 transition-all duration-300">
                     <blockquote className="italic text-gray-200 m-0 text-base leading-relaxed">
-                      "{movie.quote}"
+                      "{movie.quote || '명대사 정보 없음'}"
                     </blockquote>
                   </div>
                 </div>

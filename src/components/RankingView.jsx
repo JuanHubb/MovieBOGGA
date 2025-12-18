@@ -26,10 +26,14 @@ export default function RankingView() {
       // API는 최대 10개까지만 제공
       const apiMovies = await fetchDailyBoxOffice(formattedDate, 10)
       setMovies(apiMovies)
+      // 영화 목록을 localStorage에 저장 (DetailView에서 사용하기 위해)
+      localStorage.setItem('movies', JSON.stringify(apiMovies))
     } catch (err) {
       console.error('영화 데이터 로드 실패:', err)
       setError(err.message || '데이터를 불러오는데 실패했습니다.')
       setMovies(allMoviesArray)
+      // 에러 발생 시 mock 데이터도 localStorage에 저장
+      localStorage.setItem('movies', JSON.stringify(allMoviesArray))
     } finally {
       setLoading(false)
     }
