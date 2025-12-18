@@ -315,14 +315,14 @@ export default function DetailView() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="md:col-span-1 p-4 bg-gray-700/30 rounded-lg">
+            <div className="md:col-span-3 p-4 bg-gray-700/30 rounded-lg">
               <div className="text-sm font-medium text-gray-400 mb-2">
                 Movie Trailer
               </div>
               {trailerUrl ? (
                 <div
                   className="relative w-full"
-                  style={{ paddingBottom: "56.25%" }}
+                  style={{ paddingBottom: "18.75%" }}
                 >
                   <iframe
                     title="Movie Trailer"
@@ -338,30 +338,6 @@ export default function DetailView() {
                   <p>No trailer available</p>
                 </div>
               )}
-            </div>
-            <div className="md:col-span-2 space-y-3 p-4 bg-gray-700/30 rounded-lg">
-              <div className="grid grid-cols-2 gap-4 text-sm h-full">
-                <div className="flex flex-col">
-                  <div className="text-base font-bold text-white mb-3 pb-2 border-b border-gray-600">
-                    Viewing Information
-                  </div>
-                  <div className="text-gray-300 space-y-2">
-                    <div>Location: {movie.location || "정보 없음"}</div>
-                    <div>With: {movie.partners || "정보 없음"}</div>
-                    <div>Cookie Video: {movie.cookie || "정보 없음"}</div>
-                  </div>
-                </div>
-                <div className="flex flex-col">
-                  <div className="text-base font-bold text-white mb-3 pb-2 border-b border-gray-600">
-                    Memorable Quote
-                  </div>
-                  <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 shadow-xl border border-white/20 flex-1 flex items-center hover:bg-white/15 transition-all duration-300">
-                    <blockquote className="italic text-gray-200 m-0 text-base leading-relaxed">
-                      "{movie.quote || "명대사 정보 없음"}"
-                    </blockquote>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </section>
