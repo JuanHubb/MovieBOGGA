@@ -9,9 +9,8 @@ import {
 } from "../utils/format.js";
 import styled from "styled-components";
 
-const TMDB_API_KEY = 'd0ae6c80f1ae0a6dc5f19f0a08d88f44'
-const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500'
-
+const TMDB_API_KEY = "d0ae6c80f1ae0a6dc5f19f0a08d88f44";
+const TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500";
 
 function StarDisplay({ rating }) {
   return (
@@ -31,24 +30,24 @@ function StarDisplay({ rating }) {
 export default function DetailView() {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+
   // 먼저 localStorage에서 영화 목록 확인 (API에서 가져온 데이터)
   // 없으면 mockMovies에서 확인
   const [movie, setMovie] = useState(() => {
     try {
-      const storedMovies = localStorage.getItem('movies');
+      const storedMovies = localStorage.getItem("movies");
       if (storedMovies) {
         const movies = JSON.parse(storedMovies);
-        const foundMovie = movies.find(m => m.id === id);
+        const foundMovie = movies.find((m) => m.id === id);
         if (foundMovie) return foundMovie;
       }
     } catch (e) {
-      console.error('localStorage 읽기 실패:', e);
+      console.error("localStorage 읽기 실패:", e);
     }
     // localStorage에 없으면 mockMovies에서 찾기
     return mockMovies[id] || null;
   });
-  
+
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tmdbPosterPath, setTmdbPosterPath] = useState(null);
@@ -79,7 +78,7 @@ export default function DetailView() {
         `https://6933b1984090fe3bf01dc49f.mockapi.io/reviews/${selectedReview.id}`,
         {
           method: "DELETE",
-        },
+        }
       );
 
       if (!response.ok) {
@@ -87,7 +86,7 @@ export default function DetailView() {
       }
 
       setReviews((prevReviews) =>
-        prevReviews.filter((review) => review.id !== selectedReview.id),
+        prevReviews.filter((review) => review.id !== selectedReview.id)
       );
       setShowModal(false);
       setSelectedReview(null);
@@ -103,7 +102,7 @@ export default function DetailView() {
       try {
         setLoading(true);
         const response = await fetch(
-          `https://6933b1984090fe3bf01dc49f.mockapi.io/reviews?movieID=${id}`,
+          `https://6933b1984090fe3bf01dc49f.mockapi.io/reviews?movieID=${id}`
         );
         if (!response.ok) {
           throw new Error("Review does not exist");
@@ -118,22 +117,24 @@ export default function DetailView() {
       }
     };
 
-const fetchTmdbData = async () => {
-      if ( !movie || (tmdbPosterPath && trailerKey) ) return;
+    const fetchTmdbData = async () => {
+      if (!movie || (tmdbPosterPath && trailerKey)) return;
 
       setTmdbLoading(true);
-      try{
+      try {
         const searchResponse = await fetch(
-          `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(movie.title)}&language=ko-KR`
+          `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(
+            movie.title
+          )}&language=ko-KR`
         );
 
-        if (!searchResponse.ok){
+        if (!searchResponse.ok) {
           throw new Error("Failed to load TMDb search data.");
         }
-        
+
         const searchData = await searchResponse.json();
-        
-        if (searchData.results && searchData.results.length > 0){
+
+        if (searchData.results && searchData.results.length > 0) {
           const tmdbMovie = searchData.results[0];
           const movieId = tmdbMovie.id;
 
@@ -141,37 +142,38 @@ const fetchTmdbData = async () => {
           setMovieDetail(tmdbMovie.overview);
 
           const videosResponse = await fetch(
-             `https://api.themoviedb.org/3/movie/${movieId}/videos?api_key=${TMDB_API_KEY}&language=ko-KR`
+            `https://api.themoviedb.org/3/movie/${movieId}/videos?api_key=${TMDB_API_KEY}&language=ko-KR`
           );
-          
-          if (!videosResponse.ok){
-             console.warn("No videos found or failed to load videos.");
-             setTrailerKey(null);
+
+          if (!videosResponse.ok) {
+            console.warn("No videos found or failed to load videos.");
+            setTrailerKey(null);
           } else {
-             const videosData = await videosResponse.json();
-             
-             const trailer = videosData.results.find(
-                v => v.site === "YouTube" && (v.type === "Trailer" || v.type === "Teaser")
-             );
- 
-             if (trailer) {
-                setTrailerKey(trailer.key);
-             } else {
-                setTrailerKey(null);
-             }
+            const videosData = await videosResponse.json();
+
+            const trailer = videosData.results.find(
+              (v) =>
+                v.site === "YouTube" &&
+                (v.type === "Trailer" || v.type === "Teaser")
+            );
+
+            if (trailer) {
+              setTrailerKey(trailer.key);
+            } else {
+              setTrailerKey(null);
+            }
           }
         } else {
           setTmdbPosterPath(null);
           setMovieDetail(null);
           setTrailerKey(null);
         }
-
-      }catch (e){
+      } catch (e) {
         console.error("TMDb Fetch Error:", e);
-      }finally{
+      } finally {
         setTmdbLoading(false);
       }
-    }
+    };
 
     if (id) {
       fetchReviews();
@@ -190,11 +192,13 @@ const fetchTmdbData = async () => {
     );
   }
 
-  const posterUrl = tmdbPosterPath 
-    ? `${TMDB_IMAGE_BASE_URL}${tmdbPosterPath}` 
+  const posterUrl = tmdbPosterPath
+    ? `${TMDB_IMAGE_BASE_URL}${tmdbPosterPath}`
     : null;
 
-  const movieDetailText = movieDetail ? (movieDetail) : ("No additional details available.");
+  const movieDetailText = movieDetail
+    ? movieDetail
+    : "No additional details available.";
 
   const trailerUrl = trailerKey
     ? `https://www.youtube.com/embed/${trailerKey}?autoplay=1&mute=1&rel=0`
@@ -212,9 +216,7 @@ const fetchTmdbData = async () => {
             >
               <i className="fas fa-arrow-left mr-2" /> Back to Ranking
             </button>
-            <h3 className="text-2xl font-bold text-white">
-              {movie.title} Details
-            </h3>
+            <h3 className="text-2xl font-bold text-white">{movie.title}</h3>
             <button
               className="py-2 px-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-150 text-sm"
               onClick={() => navigate(`/review/${id}`)}
@@ -224,13 +226,17 @@ const fetchTmdbData = async () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div 
+            <div
               className="md:col-span-1 bg-gray-700 h-96 rounded-lg flex items-center justify-center text-gray-400 text-xl font-bold relative overflow-hidden"
-              style={posterUrl ? {
-                backgroundImage: `url(${posterUrl})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center'
-              } : {}}
+              style={
+                posterUrl
+                  ? {
+                      backgroundImage: `url(${posterUrl})`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }
+                  : {}
+              }
             >
               {posterUrl && (
                 <div className="absolute inset-0 backdrop-blur-md bg-gray-700/60"></div>
@@ -238,16 +244,15 @@ const fetchTmdbData = async () => {
               <div className="relative z-10 w-full h-full flex items-center justify-center">
                 {tmdbLoading ? (
                   <p>Loading poster...</p>
-                  ) : posterUrl ? (
-                    <img
-                      src={posterUrl}
-                      alt={`${movie.title} Poster`}
-                      className = "max-w-full max-h-full object-contain" 
-                      />
-                  ) : (
-                    <p>[Image of 포스터]</p>
-                  )
-                }
+                ) : posterUrl ? (
+                  <img
+                    src={posterUrl}
+                    alt={`${movie.title} Poster`}
+                    className="max-w-full max-h-full object-contain"
+                  />
+                ) : (
+                  <p>[Image of 포스터]</p>
+                )}
               </div>
             </div>
             <div className="md:col-span-2 space-y-3 p-4 bg-gray-700/30 rounded-lg h-96 flex flex-col overflow-hidden">
@@ -311,9 +316,14 @@ const fetchTmdbData = async () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="md:col-span-1 p-4 bg-gray-700/30 rounded-lg">
-              <div className="text-sm font-medium text-gray-400 mb-2">Movie Trailer</div>
+              <div className="text-sm font-medium text-gray-400 mb-2">
+                Movie Trailer
+              </div>
               {trailerUrl ? (
-                <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                <div
+                  className="relative w-full"
+                  style={{ paddingBottom: "56.25%" }}
+                >
                   <iframe
                     title="Movie Trailer"
                     src={trailerUrl}
@@ -336,9 +346,9 @@ const fetchTmdbData = async () => {
                     Viewing Information
                   </div>
                   <div className="text-gray-300 space-y-2">
-                    <div>Location: {movie.location || '정보 없음'}</div>
-                    <div>With: {movie.partners || '정보 없음'}</div>
-                    <div>Cookie Video: {movie.cookie || '정보 없음'}</div>
+                    <div>Location: {movie.location || "정보 없음"}</div>
+                    <div>With: {movie.partners || "정보 없음"}</div>
+                    <div>Cookie Video: {movie.cookie || "정보 없음"}</div>
                   </div>
                 </div>
                 <div className="flex flex-col">
@@ -347,7 +357,7 @@ const fetchTmdbData = async () => {
                   </div>
                   <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 shadow-xl border border-white/20 flex-1 flex items-center hover:bg-white/15 transition-all duration-300">
                     <blockquote className="italic text-gray-200 m-0 text-base leading-relaxed">
-                      "{movie.quote || '명대사 정보 없음'}"
+                      "{movie.quote || "명대사 정보 없음"}"
                     </blockquote>
                   </div>
                 </div>
