@@ -9,3 +9,7 @@ export const formatDateLabel = (d = new Date()) => {
   return `${y}. ${m}. ${day}.`
 }
 
+export const formatDateForAPI = (dateStr) => {
+  return dateStr.replace(/\.\s*/g, '').replace(/\s/g, '')
+}
+
