@@ -64,7 +64,7 @@ export default function RankingView() {
 
   return (
     <>
-      <Header title="Movie Mobba" />
+      <Header title="Movie Bogga" />
       <main className="container mx-auto p-4 md:p-8">
         <SearchPanel
           date={date}
