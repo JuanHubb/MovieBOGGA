@@ -9,7 +9,7 @@ import {
 } from "../utils/format.js";
 import styled from "styled-components";
 
-const TMDB_API_KEY = "d0ae6c80f1ae0a6dc5f19f0a08d88f44";
+const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 const TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500";
 
 function StarDisplay({ rating }) {
