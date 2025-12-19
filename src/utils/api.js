@@ -1,5 +1,5 @@
 const API_KEY = import.meta.env.VITE_KOBIS_API_KEY
-const BASE_URL = 'http://www.kobis.or.kr/kobisopenapi/webservice/rest/boxoffice/searchDailyBoxOfficeList.json'
+const BASE_URL = 'https://www.kobis.or.kr/kobisopenapi/webservice/rest/boxoffice/searchDailyBoxOfficeList.json'
 
 const transformMovieData = (apiMovie, index) => {
   return {
@@ -64,7 +64,7 @@ export const fetchMovieDetail = async (movieCd) => {
       throw new Error('API 키가 설정되지 않았습니다.')
     }
 
-    const detailUrl = 'http://www.kobis.or.kr/kobisopenapi/webservice/rest/movie/searchMovieInfo.json'
+    const detailUrl = 'https://www.kobis.or.kr/kobisopenapi/webservice/rest/movie/searchMovieInfo.json'
     const url = new URL(detailUrl)
     url.searchParams.append('key', API_KEY)
     url.searchParams.append('movieCd', movieCd)
