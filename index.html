@@ -1,13 +1,16 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>KOBIS 일일 박스오피스</title>
+    <title>Movie Bogga</title>
     <!-- Tailwind CSS CDN (utility classes) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome (icons) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
     <style>
       :root {
         --bg-dark: #121212;
@@ -19,20 +22,53 @@
         --red-accent: #ef4444;
         --star-color: #ffd700;
       }
-      body { background-color: var(--bg-dark); color: var(--text-light); font-family: 'Inter', sans-serif; }
-      .panel { background-color: var(--panel-dark); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,.4); border: 1px solid var(--border-color); }
-      .input-style { background-color: var(--input-dark); border: 1px solid var(--border-color); color: var(--text-light); padding: 8px 12px; border-radius: 4px; outline: none; transition: border-color .2s; }
-      .input-style:focus { border-color: var(--blue-accent); }
-      .ranking-table th { padding: 15px 12px; background-color: #252525; border-bottom: 2px solid var(--border-color); font-weight: 600; white-space: nowrap; }
-      .ranking-table td { padding: 12px; border-bottom: 1px solid #2f2f2f; }
-      .ranking-table tbody tr:hover { background-color: #252525; }
-      .filter-btn.active { background-color: #4a4a4a; border-color: #4a4a4a; color: white; box-shadow: inset 0 1px 3px rgba(0,0,0,.3); }
+      body {
+        background-color: var(--bg-dark);
+        color: var(--text-light);
+        font-family: "Inter", sans-serif;
+      }
+      .panel {
+        background-color: var(--panel-dark);
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        border: 1px solid var(--border-color);
+      }
+      .input-style {
+        background-color: var(--input-dark);
+        border: 1px solid var(--border-color);
+        color: var(--text-light);
+        padding: 8px 12px;
+        border-radius: 4px;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      .input-style:focus {
+        border-color: var(--blue-accent);
+      }
+      .ranking-table th {
+        padding: 15px 12px;
+        background-color: #252525;
+        border-bottom: 2px solid var(--border-color);
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .ranking-table td {
+        padding: 12px;
+        border-bottom: 1px solid #2f2f2f;
+      }
+      .ranking-table tbody tr:hover {
+        background-color: #252525;
+      }
+      .filter-btn.active {
+        background-color: #4a4a4a;
+        border-color: #4a4a4a;
+        color: white;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+      }
     </style>
   </head>
   <body class="min-h-screen">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
-  
 </html>
-
