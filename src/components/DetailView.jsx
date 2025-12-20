@@ -58,14 +58,23 @@ export default function DetailView() {
   const [showModal, setShowModal] = useState(false);
   const [selectedReview, setSelectedReview] = useState(null);
   const [password, setPassword] = useState("");
+  const [modalAction, setModalAction] = useState("delete"); // 'delete' or 'edit'
 
-  const handleDeleteClick = (review) => {
+  const handleEditClick = (review) => {
     setSelectedReview(review);
+    setModalAction("edit");
     setShowModal(true);
     setPassword("");
   };
 
-  const handleConfirmDelete = async () => {
+  const handleDeleteClick = (review) => {
+    setSelectedReview(review);
+    setModalAction("delete");
+    setShowModal(true);
+    setPassword("");
+  };
+
+  const handleConfirm = async () => {
     if (!selectedReview) return;
 
     if (password !== selectedReview.password) {
@@ -73,27 +82,34 @@ export default function DetailView() {
       return;
     }
 
-    try {
-      const response = await fetch(
-        `https://6933b1984090fe3bf01dc49f.mockapi.io/reviews/${selectedReview.id}`,
-        {
-          method: "DELETE",
+    if (modalAction === "delete") {
+      try {
+        const response = await fetch(
+          `https://6933b1984090fe3bf01dc49f.mockapi.io/reviews/${selectedReview.id}`,
+          {
+            method: "DELETE",
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error("Review does not exist");
         }
-      );
 
-      if (!response.ok) {
-        throw new Error("Review does not exist");
+        setReviews((prevReviews) =>
+          prevReviews.filter((review) => review.id !== selectedReview.id),
+        );
+        setShowModal(false);
+        setSelectedReview(null);
+        alert("Your review is deleted!");
+      } catch (e) {
+        alert(e.message);
+        setError(e.message);
       }
-
-      setReviews((prevReviews) =>
-        prevReviews.filter((review) => review.id !== selectedReview.id)
-      );
+    } else if (modalAction === "edit") {
       setShowModal(false);
-      setSelectedReview(null);
-      alert("Your review is deleted!");
-    } catch (e) {
-      alert(e.message);
-      setError(e.message);
+      navigate(`/review/${selectedReview.movieID}/edit`, {
+        state: { review: selectedReview },
+      });
     }
   };
 
@@ -379,7 +395,10 @@ export default function DetailView() {
                         </blockquote>
                       )}
                       <p className="text-gray-200">{review.review}</p>
-                      <div className="flex justify-end mt-4">
+                      <div className="flex justify-end mt-4 space-x-2">
+                        <EditButton onClick={() => handleEditClick(review)}>
+                          Edit
+                        </EditButton>
                         <DeleteButton onClick={() => handleDeleteClick(review)}>
                           Delete
                         </DeleteButton>
@@ -397,7 +416,9 @@ export default function DetailView() {
         <ModalBackdrop onClick={() => setShowModal(false)}>
           <ModalContent onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-bold mb-4 text-white">
-              Enter the password
+              {modalAction === "edit"
+                ? "Enter password to edit"
+                : "Enter the password"}
             </h3>
             <input
               type="password"
@@ -417,10 +438,14 @@ export default function DetailView() {
                 Cancel
               </button>
               <button
-                onClick={handleConfirmDelete}
-                className="py-2 px-4 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition duration-150"
+                onClick={handleConfirm}
+                className={`py-2 px-4 text-white font-semibold rounded-lg transition duration-150 ${
+                  modalAction === "edit"
+                    ? "bg-blue-600 hover:bg-blue-700"
+                    : "bg-red-600 hover:bg-red-700"
+                }`}
               >
-                Delete
+                {modalAction === "edit" ? "Confirm" : "Delete"}
               </button>
             </div>
           </ModalContent>
@@ -486,6 +511,23 @@ const DeleteButton = styled.button`
     background-color: #ef4444;
     color: white;
     box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+  }
+`;
+
+const EditButton = styled.button`
+  background-color: transparent;
+  color: #3b82f6;
+  border: 1px solid #3b82f6;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  transition: all 0.2s ease-in-out;
+  line-height: 1.25;
+
+  &:hover {
+    background-color: #3b82f6;
+    color: white;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
   }
 `;
 

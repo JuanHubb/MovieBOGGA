@@ -11,6 +11,7 @@ export default function App() {
         <Route path="/" element={<RankingView />} />
         <Route path="/detail/:id" element={<DetailView />} />
         <Route path="/review/:id" element={<ReviewForm />} />
+        <Route path="/review/:id/edit" element={<ReviewForm />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import React, { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Header from "./Header.jsx";
 import { mockMovies } from "../data/mockMovies.js";
 
@@ -18,12 +18,16 @@ function Star({ active, onClick, idx }) {
 export default function ReviewForm() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation(); // Add this line to get the location object from react-router-dom
   const movie = mockMovies[id];
+
+  const isEditMode = location.state?.review;
+  const existingReview = isEditMode ? location.state.review : null;
 
   const [sex, setSex] = useState("");
   const [age, setAge] = useState("");
   const [rating, setRating] = useState(0);
-  const [location, setLocation] = useState("");
+  const [reviewLocation, setReviewLocation] = useState("");
   const [partners, setPartners] = useState("");
   const [cookie, setCookie] = useState("");
   const [quote, setQuote] = useState("");
@@ -31,9 +35,27 @@ export default function ReviewForm() {
   const [password, setPassword] = useState("");
   const [nickname, setNickname] = useState("");
 
+  useEffect(() => {
+    if (isEditMode) {
+      setNickname(existingReview.nickname);
+      setSex(existingReview.sex);
+      setAge(existingReview.age.toString());
+      setRating(existingReview.rating);
+      setReviewLocation(existingReview.location);
+      setPartners(existingReview.companion);
+      setCookie(existingReview.pcScene ? "Y" : "N");
+      setQuote(existingReview.quote);
+      setContent(existingReview.review);
+      setPassword(existingReview.password);
+    }
+  }, [isEditMode, existingReview]);
+
   const title = useMemo(
-    () => (movie ? `Write Review for ${movie.title}` : "Write Review"),
-    [movie],
+    () =>
+      movie
+        ? `${isEditMode ? "Edit" : "Write"} Review for ${movie.title}`
+        : "Review",
+    [movie, isEditMode]
   );
 
   const submit = async (e) => {
@@ -47,7 +69,7 @@ export default function ReviewForm() {
       nickname;
     if (!valid) {
       alert(
-        "Please fill in all required fields (Nickname, Gender, Age, Rating, Review (min. 10 characters), Password (min. 4 characters)).",
+        "Please fill in all required fields (Nickname, Gender, Age, Rating, Review (min. 10 characters), Password (min. 4 characters))."
       );
       return;
     }
@@ -57,7 +79,7 @@ export default function ReviewForm() {
       sex,
       age: parseInt(age, 10),
       rating,
-      location,
+      location: reviewLocation,
       companion: partners,
       pcScene: cookie === "Y",
       quote,
@@ -66,35 +88,45 @@ export default function ReviewForm() {
       movieID: parseInt(id, 10),
     };
 
+    const url = isEditMode
+      ? `https://6933b1984090fe3bf01dc49f.mockapi.io/reviews/${existingReview.id}`
+      : "https://6933b1984090fe3bf01dc49f.mockapi.io/reviews";
+
+    const method = isEditMode ? "PUT" : "POST";
+
     try {
-      const response = await fetch(
-        "https://6933b1984090fe3bf01dc49f.mockapi.io/reviews",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(reviewData),
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify(reviewData),
+      });
 
       if (response.ok) {
         alert(
-          `Review submitted successfully! (Movie: ${
-            movie?.title ?? ""
-          }, Rating: ${rating})`,
+          `Review ${
+            isEditMode ? "updated" : "submitted"
+          } successfully! (Movie: ${movie?.title ?? ""}, Rating: ${rating})`
         );
         navigate(`/detail/${id}`);
       } else {
         const errorData = await response.json();
         alert(
-          `Failed to submit review: ${errorData.message || "Unknown error"}`,
+          `Failed to ${isEditMode ? "update" : "submit"} review: ${
+            errorData.message || "Unknown error"
+          }`
         );
       }
     } catch (error) {
-      console.error("Network error while submitting review:", error);
+      console.error(
+        `Network error while ${isEditMode ? "updating" : "submitting"} review:`,
+        error
+      );
       alert(
-        "An error occurred while submitting the review. Please check your internet connection.",
+        `An error occurred while ${
+          isEditMode ? "updating" : "submitting"
+        } the review. Please check your internet connection.`
       );
     }
   };
@@ -120,7 +152,10 @@ export default function ReviewForm() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="flex flex-col">
-                <label htmlFor="reviewNickname" className="text-sm font-medium mb-1">
+                <label
+                  htmlFor="reviewNickname"
+                  className="text-sm font-medium mb-1"
+                >
                   Nickname
                 </label>
                 <input
@@ -192,8 +227,8 @@ export default function ReviewForm() {
                   id="reviewLocation"
                   className="input-style"
                   placeholder="e.g., CGV Gangnam"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
+                  value={reviewLocation}
+                  onChange={(e) => setReviewLocation(e.target.value)}
                 />
               </div>
               <div className="flex flex-col">
@@ -287,7 +322,7 @@ export default function ReviewForm() {
                 type="submit"
                 className="py-2 px-6 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-150"
               >
-                Submit Review
+                {isEditMode ? "Update Review" : "Submit Review"}
               </button>
             </div>
           </form>
